@@ -1,0 +1,19 @@
+{
+  "name": "teacup-namespace",
+  "version": "0.1.0",
+  "description": "Plugin for teacup to add namespaces to IDs and classes",
+  "main": "lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mark-hahn/teacup-namespace.git"
+  },
+  "keywords": [
+    "css", "teacup", "plugin", "namespace"
+  ],
+  "author": "Mark Hahn",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mark-hahn/teacup-namespace/issues"
+  },
+  "homepage": "https://github.com/mark-hahn/teacup-namespace#readme"
+}
