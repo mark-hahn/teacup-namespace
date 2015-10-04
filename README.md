@@ -1,6 +1,6 @@
 # teacup-namespace
 
-**Plugin for teacup to generate classes with namespace and class hierarchy**
+**Plugin for teacup to add namespaces to IDs and classes**
 
 
 ### License

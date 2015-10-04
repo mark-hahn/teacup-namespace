@@ -1,41 +1,50 @@
 
-# log = (args...) -> console.log 'CNSPC:', args...
+log = (args...) -> console.log 'TNSPC:', args...
 
-module.exports = (options) ->
-  (teacup) ->
-    originalMethods = {}
+addSpace = (space, selector) ->
+  lastIndex   = 0
+  newSelector = ''
+  regex = new RegExp '(#|\\.)%', 'g'
+  while (matches = regex.exec selector)
+    newSelector += selector[lastIndex...matches.index] + 
+                   matches[1] + space + '-'
+    {lastIndex}  = regex
+  newSelector += selector[lastIndex...]
+  newSelector
+
+module.exports = (teacup) ->
+  # (teacup) ->
+    originalMethods = null
     do ->
-      {render, renderContents, isSelector, parseSelector, normalizeArgs} = teacup
-      originalMethods = {render, renderContents, isSelector, parseSelector, normalizeArgs}
-      
-    teacup.classStack = ['global', '_']
-
+      {render, renderContents, isSelector, parseSelector} = teacup
+      originalMethods = {render, renderContents, isSelector, parseSelector}
+    
     teacup.render = (template, args...) ->
-      for arg in args
-        if arg.classNamespace then teacup.classStack[0] = arg.classNamespace
+      teacup.tn_namespace  = null
+      teacup.tn_spaceStack = ['']
       originalMethods.render.call teacup, template, args...
     
     teacup.renderContents = (contents, rest...) ->
-      isFunc = (typeof contents is 'function')
-      teacup.classStack.push '_' if isFunc
+      namespace = teacup.tn_namespace
+      teacup.tn_namespace = null
+      teacup.tn_spaceStack.push namespace if namespace
+      # log 'renderContents', namespace, teacup.tn_spaceStack
       originalMethods.renderContents.call teacup, contents, rest...
-      teacup.classStack.pop()    if isFunc
-      
+      teacup.tn_spaceStack.pop() if namespace
+    
     teacup.isSelector = (string) ->
-      string.length > 1 and string.charAt(0) in ['#', '.', '+']
+      teacup.tn_namespace = null
+      string.length > 1 and string.charAt(0) in ['#', '.', '%']
 
-    plusClassRegex = new RegExp '\\+([^\\#\\.\\+]+)', 'g'
+    spaceRegex = new RegExp '^%([^#.]+)', 'g'
     teacup.parseSelector = (selector) ->
-      # log 'entr parseSelector', selector, teacup.classStack
-      plusClass = plusClassRegex.exec selector
-      selector = selector.replace plusClassRegex, ''
-      if not (klass = plusClass?[1])
-        originalMethods.parseSelector.call teacup, selector
-        return
-      teacup.classStack[teacup.classStack.length-1] = klass
-      selector += '.'
-      for klass in teacup.classStack when klass isnt '_'
-        selector += klass + '-'
-      # log 'exit parseSelector', selector, teacup.classStack
-      originalMethods.parseSelector.call teacup, selector[0..-2]
-      
+      origSel = selector
+      space = (if (parts = spaceRegex.exec selector) \
+                 then                                \
+                   (teacup.tn_namespace = parts[1])  \
+                 else                                \
+                   teacup.tn_spaceStack[teacup.tn_spaceStack.length-1])
+      selector = selector.replace spaceRegex, ''
+      if space then selector = addSpace space, selector
+      # log 'parseSelector', origSel, selector, space, teacup.tn_namespace, teacup.tn_spaceStack
+      originalMethods.parseSelector.call teacup, selector
